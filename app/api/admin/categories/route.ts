@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCategories, saveCategories, type Category } from '@/lib/data'
+import { getCategories, insertCategory, type Category } from '@/lib/data'
 import { isAdminAuthenticated } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   }
 
   const data = await request.json()
-  const categories = getCategories()
+  const categories = await getCategories()
 
   // 生成新 ID
   const newId = `category-${Date.now()}`
@@ -21,8 +21,7 @@ export async function POST(request: NextRequest) {
     order: data.order || 0,
   }
 
-  categories.push(newCategory)
-  saveCategories(categories)
+  await insertCategory(newCategory)
 
   return NextResponse.json({ success: true, category: newCategory })
 }

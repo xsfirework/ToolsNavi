@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCategories, saveCategories } from '@/lib/data'
+import { getCategories, updateCategory, deleteCategory } from '@/lib/data'
 import { isAdminAuthenticated } from '@/lib/auth'
 
 export async function PUT(
@@ -12,22 +12,22 @@ export async function PUT(
   }
 
   const data = await request.json()
-  const categories = getCategories()
+  const categories = await getCategories()
   const index = categories.findIndex(cat => cat.id === params.id)
 
   if (index === -1) {
     return NextResponse.json({ error: 'Category not found' }, { status: 404 })
   }
 
-  categories[index] = {
+  const updated = {
     ...categories[index],
     name: data.name,
     slug: data.slug,
     order: data.order || 0,
   }
 
-  saveCategories(categories)
-  return NextResponse.json({ success: true, category: categories[index] })
+  await updateCategory(updated)
+  return NextResponse.json({ success: true, category: updated })
 }
 
 export async function DELETE(
@@ -39,13 +39,6 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const categories = getCategories()
-  const filteredCategories = categories.filter(cat => cat.id !== params.id)
-
-  if (filteredCategories.length === categories.length) {
-    return NextResponse.json({ error: 'Category not found' }, { status: 404 })
-  }
-
-  saveCategories(filteredCategories)
+  await deleteCategory(params.id)
   return NextResponse.json({ success: true })
 }

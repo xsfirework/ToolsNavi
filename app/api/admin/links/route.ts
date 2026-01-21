@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getLinks, saveLinks, type Link } from '@/lib/data'
+import { getLinks, insertLink, type Link } from '@/lib/data'
 import { isAdminAuthenticated } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   }
 
   const data = await request.json()
-  const links = getLinks()
+  const links = await getLinks()
 
   // 生成新 ID
   const newId = `link-${Date.now()}`
@@ -24,8 +24,7 @@ export async function POST(request: NextRequest) {
     order: data.order || 0,
   }
 
-  links.push(newLink)
-  saveLinks(links)
+  await insertLink(newLink)
 
   return NextResponse.json({ success: true, link: newLink })
 }

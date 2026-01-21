@@ -1,11 +1,10 @@
 import { getCategories, getLinks } from '@/lib/data'
 import { MetadataRoute } from 'next'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://example.com'
   
-  const categories = getCategories()
-  const links = getLinks()
+  const [categories, links] = await Promise.all([getCategories(), getLinks()])
 
   const categoryUrls = categories.map((category) => ({
     url: `${baseUrl}/category/${category.slug}`,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getLinks, saveLinks, type Link } from '@/lib/data'
+import { getLinks, updateLink, deleteLink, type Link } from '@/lib/data'
 import { isAdminAuthenticated } from '@/lib/auth'
 
 export async function PUT(
@@ -12,14 +12,14 @@ export async function PUT(
   }
 
   const data = await request.json()
-  const links = getLinks()
+  const links = await getLinks()
   const index = links.findIndex(link => link.id === params.id)
 
   if (index === -1) {
     return NextResponse.json({ error: 'Link not found' }, { status: 404 })
   }
 
-  links[index] = {
+  const updated: Link = {
     ...links[index],
     title: data.title,
     slug: data.slug,
@@ -30,8 +30,8 @@ export async function PUT(
     order: data.order || 0,
   }
 
-  saveLinks(links)
-  return NextResponse.json({ success: true, link: links[index] })
+  await updateLink(updated)
+  return NextResponse.json({ success: true, link: updated })
 }
 
 export async function DELETE(
@@ -43,13 +43,6 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const links = getLinks()
-  const filteredLinks = links.filter(link => link.id !== params.id)
-
-  if (filteredLinks.length === links.length) {
-    return NextResponse.json({ error: 'Link not found' }, { status: 404 })
-  }
-
-  saveLinks(filteredLinks)
+  await deleteLink(params.id)
   return NextResponse.json({ success: true })
 }

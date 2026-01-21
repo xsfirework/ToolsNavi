@@ -12,10 +12,12 @@ export const metadata: Metadata = {
   },
 }
 
-export default function HomePage() {
-  const allLinks = getLinks()
-  const categories = getCategories()
-  const topCategories = getTopCategories()
+export default async function HomePage() {
+  const [allLinks, categories, topCategories] = await Promise.all([
+    getLinks(),
+    getCategories(),
+    getTopCategories(),
+  ])
 
   return (
     <HomeClient

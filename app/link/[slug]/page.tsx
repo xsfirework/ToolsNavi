@@ -5,14 +5,14 @@ import type { Metadata } from 'next'
 
 export async function generateStaticParams() {
   const { getLinks } = await import('@/lib/data')
-  const links = getLinks()
+  const links = await getLinks()
   return links.map((link) => ({
     slug: link.slug,
   }))
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const link = getLinkBySlug(params.slug)
+  const link = await getLinkBySlug(params.slug)
   if (!link) {
     return {
       title: '链接不存在',
@@ -29,13 +29,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default function LinkDetailPage({ params }: { params: { slug: string } }) {
-  const link = getLinkBySlug(params.slug)
+export default async function LinkDetailPage({ params }: { params: { slug: string } }) {
+  const link = await getLinkBySlug(params.slug)
   if (!link) {
     notFound()
   }
 
-  const category = getCategoryBySlug(link.categoryId)
+  const category = await getCategoryBySlug(link.categoryId)
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

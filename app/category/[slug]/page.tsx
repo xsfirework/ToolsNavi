@@ -4,14 +4,14 @@ import type { Metadata } from 'next'
 import CategoryClient from './category-client'
 
 export async function generateStaticParams() {
-  const categories = getCategories()
+  const categories = await getCategories()
   return categories.map((category) => ({
     slug: category.slug,
   }))
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const category = getCategoryBySlug(params.slug)
+  const category = await getCategoryBySlug(params.slug)
   if (!category) {
     return {
       title: '分类不存在',
@@ -28,14 +28,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default function CategoryPage({ params }: { params: { slug: string } }) {
-  const category = getCategoryBySlug(params.slug)
+export default async function CategoryPage({ params }: { params: { slug: string } }) {
+  const category = await getCategoryBySlug(params.slug)
   if (!category) {
     notFound()
   }
 
-  const categories = getCategories()
-  const links = getLinksByCategory(category.id)
+  const [categories, links] = await Promise.all([
+    getCategories(),
+    getLinksByCategory(category.id),
+  ])
 
   return (
     <CategoryClient
