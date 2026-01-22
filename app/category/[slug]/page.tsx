@@ -3,12 +3,8 @@ import { getCategories, getCategoryBySlug, getLinksByCategory } from '@/lib/data
 import type { Metadata } from 'next'
 import CategoryClient from './category-client'
 
-export async function generateStaticParams() {
-  const categories = await getCategories()
-  return categories.map((category) => ({
-    slug: category.slug,
-  }))
-}
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const category = await getCategoryBySlug(params.slug)

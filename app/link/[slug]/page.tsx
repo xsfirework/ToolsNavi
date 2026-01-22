@@ -3,13 +3,8 @@ import Link from 'next/link'
 import { getLinkBySlug, getCategoryBySlug } from '@/lib/data'
 import type { Metadata } from 'next'
 
-export async function generateStaticParams() {
-  const { getLinks } = await import('@/lib/data')
-  const links = await getLinks()
-  return links.map((link) => ({
-    slug: link.slug,
-  }))
-}
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const link = await getLinkBySlug(params.slug)
