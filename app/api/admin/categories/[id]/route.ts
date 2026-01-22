@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCategories, updateCategory, deleteCategory } from '@/lib/data'
 import { isAdminAuthenticated } from '@/lib/auth'
@@ -27,6 +28,7 @@ export async function PUT(
   }
 
   await updateCategory(updated)
+  revalidatePath('/')
   return NextResponse.json({ success: true, category: updated })
 }
 
@@ -40,5 +42,6 @@ export async function DELETE(
   }
 
   await deleteCategory(params.id)
+  revalidatePath('/')
   return NextResponse.json({ success: true })
 }

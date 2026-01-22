@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { getLinks, updateLink, deleteLink, type Link } from '@/lib/data'
 import { isAdminAuthenticated } from '@/lib/auth'
@@ -31,6 +32,7 @@ export async function PUT(
   }
 
   await updateLink(updated)
+  revalidatePath('/')
   return NextResponse.json({ success: true, link: updated })
 }
 
@@ -44,5 +46,6 @@ export async function DELETE(
   }
 
   await deleteLink(params.id)
+  revalidatePath('/')
   return NextResponse.json({ success: true })
 }

@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCategories, insertCategory, type Category } from '@/lib/data'
 import { isAdminAuthenticated } from '@/lib/auth'
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   await insertCategory(newCategory)
+  revalidatePath('/')
 
   return NextResponse.json({ success: true, category: newCategory })
 }
