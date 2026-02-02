@@ -16,8 +16,7 @@ export default function HomeClient({ initialLinks, categories, topCategories }: 
   const [activeTopCategoryId, setActiveTopCategoryId] = useState<string>(
     topCategories[0]?.id || ''
   )
-  // 当前悬停的分类（鼠标移动到分类上时显示）
-  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null)
+
   // 选中的链接（用于显示详情模态框）
   const [selectedLink, setSelectedLink] = useState<LinkType | null>(null)
   // 搜索关键词
@@ -30,11 +29,13 @@ export default function HomeClient({ initialLinks, categories, topCategories }: 
       .sort((a, b) => a.order - b.order)
   }, [categories, activeTopCategoryId])
 
-  // 获取当前显示的分类（仅显示悬停的分类，否则为 null 表示显示全部）
-  // 如果有搜索关键词，不限制分类
-  const displayCategoryId = searchQuery.trim()
-    ? null
-    : (hoveredCategoryId || null)
+  // 点击左侧分类时滚动到对应区域
+  const scrollToCategory = (categoryId: string) => {
+    const element = document.getElementById(`category-${categoryId}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
 
   // 获取当前分类下的链接（如果有搜索，则搜索所有链接）
   const currentLinks = useMemo(() => {
@@ -47,20 +48,17 @@ export default function HomeClient({ initialLinks, categories, topCategories }: 
         link.title.toLowerCase().includes(lowerQuery) ||
         link.description.toLowerCase().includes(lowerQuery)
       )
-    } else if (displayCategoryId) {
-      // 否则显示当前悬停分类下的链接
-      filteredLinks = initialLinks.filter(link => link.categoryId === displayCategoryId)
     } else {
-      // 如果没有悬停分类，显示当前大类目下的所有链接
+      // 显示当前大类目下的所有链接
       const currentCategoryIds = new Set(currentCategories.map(c => c.id))
       filteredLinks = initialLinks.filter(link => currentCategoryIds.has(link.categoryId))
     }
 
     return filteredLinks.sort((a, b) => a.order - b.order)
-  }, [initialLinks, displayCategoryId, searchQuery, currentCategories])
+  }, [initialLinks, searchQuery, currentCategories])
 
   return (
-    <div className="min-h-screen bg-[#fffafa]">
+    <div className="min-h-screen bg-[#fffafa]" style={{ overflowY: 'scroll' }}>
       {/* 顶部大类目切换 */}
       <header
         className="bg-white/80 backdrop-blur-md border-b border-rose-100 sticky top-0 z-50 py-8"
@@ -104,7 +102,7 @@ export default function HomeClient({ initialLinks, categories, topCategories }: 
                   key={topCat.id}
                   onMouseEnter={() => setActiveTopCategoryId(topCat.id)}
                   className={`w-[140px] py-2.5 rounded-full cursor-pointer transition-colors duration-200 font-bold text-sm shadow-sm border-2 text-center flex items-center justify-center ${activeTopCategoryId === topCat.id
-                    ? 'bg-rose-500 text-white border-rose-500 shadow-rose-200 ring-2 ring-inset ring-rose-200/50'
+                    ? 'bg-rose-500 text-white border-rose-500 shadow-rose-200 shadow-[inset_0_0_0_2px_rgba(255,228,230,0.5)]'
                     : 'bg-white text-rose-400 border-rose-100 hover:bg-rose-50 hover:border-rose-200'
                     }`}
                 >
@@ -116,35 +114,48 @@ export default function HomeClient({ initialLinks, categories, topCategories }: 
         </div>
       </header>
 
-      {/* 主内容区：左侧分类列表 + 右侧卡片展示 */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          {/* 左侧分类列表（搜索时隐藏） - 独立卡片化设计 */}
-          {!searchQuery.trim() && (
-            <aside className="w-60 flex-shrink-0">
-              <nav
-                className="space-y-4 sticky top-[340px] max-h-[calc(100vh-380px)] overflow-y-auto transition-all scrollbar-hide"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      {/* 左侧分类列表（搜索时隐藏） - 固定位置设计，仅桌面端显示 */}
+      {!searchQuery.trim() && (
+        <aside className="hidden lg:block fixed left-[max(1rem,calc((100vw-1280px)/2+1rem))] top-[200px] w-48 z-40">
+          <nav
+            className="space-y-2 max-h-[calc(100vh-240px)] overflow-y-auto scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {currentCategories.map((category) => (
+              <div
+                key={category.id}
+                onClick={() => scrollToCategory(category.id)}
+                className="px-3 py-2.5 rounded-xl cursor-pointer transition-colors text-sm font-bold border-2 bg-white text-rose-400 border-rose-50 shadow-sm hover:border-rose-200 hover:text-rose-500 hover:shadow-md hover:bg-rose-50"
               >
-                {currentCategories.map((category) => (
-                  <div
-                    key={category.id}
-                    onMouseEnter={() => setHoveredCategoryId(category.id)}
-                    onMouseLeave={() => setHoveredCategoryId(null)}
-                    className={`px-5 py-4 rounded-2xl cursor-pointer transition-all text-lg font-bold border-2 ${displayCategoryId === category.id
-                      ? 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-200 -translate-y-1 scale-105'
-                      : 'bg-white text-rose-400 border-rose-50 shadow-sm hover:border-rose-200 hover:text-rose-500 hover:shadow-md hover:-translate-y-0.5'
-                      }`}
-                  >
-                    {category.name}
-                  </div>
-                ))}
-              </nav>
-            </aside>
-          )}
+                {category.name}
+              </div>
+            ))}
+          </nav>
+        </aside>
+      )}
 
+      {/* 移动端分类标签栏（水平滚动） */}
+      {!searchQuery.trim() && (
+        <div className="lg:hidden sticky top-[180px] z-40 bg-[#fffafa]/95 backdrop-blur-sm py-3 px-4 -mx-4 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-2 min-w-max">
+            {currentCategories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => scrollToCategory(category.id)}
+                className="px-4 py-2 rounded-full text-sm font-bold border-2 bg-white text-rose-400 border-rose-100 shadow-sm whitespace-nowrap hover:bg-rose-50 hover:border-rose-200 active:bg-rose-100"
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 主内容区 */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
+        <div className={`flex gap-8 items-start ${!searchQuery.trim() ? 'lg:pl-56' : ''}`}>
           {/* 右侧卡片展示区 - 多列布局 */}
-          <div className={searchQuery.trim() ? 'w-full' : 'flex-1'}>
+          <div className="flex-1">
             {currentLinks.length === 0 ? (
               <div className="bg-white rounded-3xl border-2 border-dashed border-rose-100 p-12 text-center">
                 <p className="text-rose-300 font-medium">
@@ -178,9 +189,8 @@ export default function HomeClient({ initialLinks, categories, topCategories }: 
                     ))}
                   </div>
                 ) : (
-                  // 分类展示模式（包含全部或单个分类）
+                  // 分类展示模式（显示全部分类）
                   currentCategories
-                    .filter(category => !displayCategoryId || category.id === displayCategoryId)
                     .map(category => {
                       const categoryLinks = initialLinks
                         .filter(link => link.categoryId === category.id)
@@ -189,13 +199,25 @@ export default function HomeClient({ initialLinks, categories, topCategories }: 
                       if (categoryLinks.length === 0) return null
 
                       return (
-                        <section key={category.id} className="space-y-5">
-                          <div className="flex items-center gap-3">
-                            <span className="w-1.5 h-6 bg-rose-500 rounded-full shadow-sm"></span>
-                            <h3 className="text-xl font-black text-gray-800 tracking-tight">
-                              {category.name}
-                            </h3>
+                        <section key={category.id} id={`category-${category.id}`} className="space-y-5 scroll-mt-[200px]">
+                          <div className="flex items-center gap-4 mb-5">
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <span className="w-1.5 h-6 bg-rose-500 rounded-full shadow-sm"></span>
+                              <h3 className="text-xl font-black text-gray-800 tracking-tight">
+                                {category.name}
+                              </h3>
+                            </div>
+
+                            {/* 分类简介卡片 */}
+                            {(category.description || category.name === '掌控魔法') && (
+                              <div className="bg-white rounded-lg px-4 py-3 shadow-sm border border-rose-100 max-w-2xl">
+                                <p className="text-sm text-gray-500 leading-relaxed text-justify">
+                                  {category.description || "这里是掌控魔法分类的详细介绍。我们会精选最优质、最稳定的工具，助您轻松跨越数字鸿沟，探索更广阔的互联网世界。"}
+                                </p>
+                              </div>
+                            )}
                           </div>
+
                           <div
                             className="grid gap-4"
                             style={{

@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow-y: scroll;
+  }
   body {
     @apply bg-[#faf9f6];
   }

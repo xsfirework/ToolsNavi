@@ -11,6 +11,7 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  description?: string;
   topCategoryId: string;
   order: number;
 }
@@ -42,6 +43,7 @@ function mapCategory(row: any): Category {
     id: row.id,
     name: row.name,
     slug: row.slug,
+    description: row.description,
     topCategoryId: row.top_category_id,
     order: row.order,
   };
